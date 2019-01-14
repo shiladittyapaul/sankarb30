@@ -1,7 +1,96 @@
+
 <html>
 <head>
+<style>
+img {
+	padding: 20px;
+}
+</style>
 </head>
+
 <body>
-<h1>hiii</h1>
+<h1>Flickr API Demo</h1>
+<div class="results">
+</div>
+<script>
+var Flickr = {};
+
+
+// Fetch the Data as JSON
+Flickr.GetData = function (flickr_photoset_id) {
+  
+  var api_key           = "ff0304b4f72db0bce9d5bd0096cc20d2",
+      per_page          = 30,
+      query_page_number = 1,
+      cached            = null;
+
+  // Get the first page if there is no 'page' query string specified
+  if (typeof query_page_number == 'undefined') {
+    query_page_number = 1;
+  }
+  var flickr_url = "https://api.flickr.com/services/rest/?method=flickr.photosets.getPhotos" + 
+                    "&api_key=" + api_key + "&photoset_id=" + flickr_photoset_id +
+                    "&per_page=" + per_page + "&page=" + query_page_number +
+                    "&format=json&nojsoncallback=1";
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", flickr_url);
+  xhr.send();
+
+  console.log(flickr_url);
+
+  xhr.addEventListener('load',function(e){
+
+      var data = e.target.response;
+        Flickr.pushToDOM(data);
+
+  });
+
+}
+
+
+Flickr.pushToDOM = function (input) {
+  
+  var response = JSON.parse(input);
+  console.log(response);
+
+  // Response can return 'stat' as 'ok or 'fail'
+  //https://www.flickr.com/services/api/response.json.html
+  if (response.stat != "ok"){
+    return {
+      error: "Sorry, there was an error retrieving photos from Flickr." + 
+             "Try refreshing the page in a moment or come back later."
+    };
+  }
+
+  var output = response.photoset.photo.map(function(post) {
+    return {
+      id: post.id,
+      title: post.title,
+      secret: post.secret,
+      server: post.server,
+      farm: post.farm
+    }
+  });
+
+  var results = document.querySelector(".results");
+  
+  output.forEach(function(item){
+
+    var image = document.createElement('img');
+    image.src = "https://farm" + item.farm + ".staticflickr.com/" + item.server + "/" + item.id + "_" + item.secret + "_q.jpg";
+    
+    results.appendChild(image);
+    
+  }); 
+
+  console.log(output);
+
+};
+
+
+Flickr.GetData("72157702437342412");
+
+</script>
 </body>
 <html>
